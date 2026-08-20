@@ -1,45 +1,37 @@
 # Goal Tracker
 
-A local, standalone web app for capturing and tracking short/medium/long-term goals. Every goal reduces to one interaction — check off "I did the thing" — with a frequency target that determines what counts as progress.
+A standalone web app for capturing and tracking short/medium/long-term goals. Every goal reduces to one interaction — check off "I did the thing" — with a frequency target that determines what counts as progress.
 
 ## Stack
 
-- **Backend:** Node/Express, data persisted to a local JSON file (`server/data/goals.json`, created on first run with a few sample goals). No database, no accounts, no hosting required.
-- **Frontend:** React + Vite.
+Static React + Vite app, deployed to GitHub Pages. There is no backend: goals persist to the browser's `localStorage`, seeded with a few sample goals on first load. Data lives only in the browser/device it was entered on — it doesn't sync across devices, and clearing site data or using a different browser starts fresh.
 
-## Running it
-
-```
-npm install        # installs root, server, and client deps
-npm run dev         # runs the API (port 3001) and the Vite dev server (port 5173) together
-```
-
-Open http://localhost:5173. In dev, if `APP_PASSWORD` isn't set, the password defaults to `goals`.
-
-For a single-process production-style run (Express serves the built client):
+## Running it locally
 
 ```
-npm start
+npm install
+npm run dev
 ```
 
-Open http://localhost:3001.
+Open the URL Vite prints (http://localhost:5173/goal-tracker/).
+
+## Deploying
+
+Pushing to `main` (or the active feature branch — see `.github/workflows/deploy-pages.yml`) triggers a GitHub Actions workflow that builds the app and publishes it to GitHub Pages. One-time setup in the repo: **Settings → Pages → Build and deployment → Source: "GitHub Actions"**.
+
+The Vite `base` and the router's `basename` are both set to `/goal-tracker/` to match this repo's Pages URL (`https://<owner>.github.io/goal-tracker/`). A `404.html` redirect trick (see `client/public/404.html`) makes deep links and page refreshes work despite GitHub Pages having no server-side routing.
 
 ## Auth
 
-The whole app sits behind a single shared password (no accounts, matching the "local app" brief) — a login screen gates the UI, and every API route requires a signed, httpOnly session cookie good for 30 days.
+The app sits behind a single shared password, checked client-side, with the unlocked state remembered in `localStorage` for 30 days.
 
-Set these environment variables before deploying anywhere public:
+**This is not real security.** Because the app is 100% static, the password and all the app's logic ship inside the JS bundle that loads in the browser — anyone with the URL can read the source or open dev tools and bypass the check, or inspect `localStorage` directly. It only deters a casual look, not someone who tries. Given that tradeoff, keep in mind this is personal data (health, work, family goals) sitting behind a lock that's mostly cosmetic.
 
-- `APP_PASSWORD` — required in production; the server refuses to start without it. Locally it falls back to `goals` with a console warning.
-- `APP_SESSION_SECRET` — signs the session cookie. If unset, a random secret is generated at boot, which means everyone gets logged out on every server restart. Set a fixed value to persist logins across restarts/deploys.
-
-Login attempts are rate-limited (10 per 15 minutes per IP) and the cookie is marked `secure` automatically when `NODE_ENV=production`, so it only travels over HTTPS.
+The password lives in `client/src/api.js` (`PASSWORD` constant) — change it there and redeploy if you want a different one.
 
 ## Data model
 
 A single `Goal` object with `title`, `tier` (short/medium/long-term), `domain` tag, `definition_of_success`, optional `qualifying_examples`, a `frequency_target` (`daily` / `N times per week or month` / `unlimited` / `until X`), an optional `parent_id` (for funnels and checklists), `status`, an optional `next_review_at`, and a timestamped `check_ins` log. Progress, streaks, and totals are all computed from `check_ins` — nothing is double-stored.
-
-Data lives in `server/data/goals.json`, which is gitignored (it's local state, not source). Delete it to reset to the seeded sample goals.
 
 ## Design decisions
 

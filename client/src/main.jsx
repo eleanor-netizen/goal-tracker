@@ -8,7 +8,7 @@ import "./styles.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthGate>
-      <BrowserRouter>
+      <BrowserRouter basename="/goal-tracker">
         <App />
       </BrowserRouter>
     </AuthGate>

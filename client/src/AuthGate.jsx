@@ -14,14 +14,6 @@ export default function AuthGate({ children }) {
       .catch(() => setStatus("anon"));
   }, []);
 
-  useEffect(() => {
-    function onAuthRequired() {
-      setStatus("anon");
-    }
-    window.addEventListener("auth:required", onAuthRequired);
-    return () => window.removeEventListener("auth:required", onAuthRequired);
-  }, []);
-
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);

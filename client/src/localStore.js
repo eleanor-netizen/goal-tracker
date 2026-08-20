@@ -1,18 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, "..", "data");
-const DATA_FILE = path.join(DATA_DIR, "goals.json");
+const STORAGE_KEY = "goal-tracker:data";
 
 function seedGoals() {
   const now = new Date();
   const daysAgo = (n) => new Date(now.getTime() - n * 86400000).toISOString();
 
   const exercise = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Exercise",
     tier: "short-term",
     domain: "health",
@@ -23,15 +16,15 @@ function seedGoals() {
     status: "active",
     next_review_at: null,
     check_ins: [
-      { id: randomUUID(), at: daysAgo(1), note: "yoga video" },
-      { id: randomUUID(), at: daysAgo(3), note: "walking pad" },
+      { id: crypto.randomUUID(), at: daysAgo(1), note: "yoga video" },
+      { id: crypto.randomUUID(), at: daysAgo(3), note: "walking pad" },
     ],
     created_at: daysAgo(20),
     last_touched_at: daysAgo(1),
   };
 
   const journaling = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Journaling",
     tier: "short-term",
     domain: "personal",
@@ -42,15 +35,15 @@ function seedGoals() {
     status: "active",
     next_review_at: null,
     check_ins: [
-      { id: randomUUID(), at: daysAgo(2), note: "" },
-      { id: randomUUID(), at: daysAgo(9), note: "" },
+      { id: crypto.randomUUID(), at: daysAgo(2), note: "" },
+      { id: crypto.randomUUID(), at: daysAgo(9), note: "" },
     ],
     created_at: daysAgo(30),
     last_touched_at: daysAgo(2),
   };
 
   const clients = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Sign 12 clients",
     tier: "medium-term",
     domain: "work",
@@ -61,7 +54,7 @@ function seedGoals() {
     status: "active",
     next_review_at: null,
     check_ins: Array.from({ length: 3 }, (_, i) => ({
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       at: daysAgo(5 + i * 6),
       note: "",
     })),
@@ -70,7 +63,7 @@ function seedGoals() {
   };
 
   const pitches = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Send pitches",
     tier: "medium-term",
     domain: "work",
@@ -81,7 +74,7 @@ function seedGoals() {
     status: "active",
     next_review_at: null,
     check_ins: Array.from({ length: 8 }, (_, i) => ({
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       at: daysAgo(2 + i * 4),
       note: "",
     })),
@@ -90,7 +83,7 @@ function seedGoals() {
   };
 
   const calls = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Hold calls",
     tier: "medium-term",
     domain: "work",
@@ -101,7 +94,7 @@ function seedGoals() {
     status: "active",
     next_review_at: null,
     check_ins: Array.from({ length: 4 }, (_, i) => ({
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       at: daysAgo(3 + i * 7),
       note: "",
     })),
@@ -110,7 +103,7 @@ function seedGoals() {
   };
 
   const appointments = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Book doctors' appointments",
     tier: "short-term",
     domain: "family",
@@ -126,7 +119,7 @@ function seedGoals() {
   };
 
   const dentist = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Book dentist",
     tier: "short-term",
     domain: "family",
@@ -136,13 +129,13 @@ function seedGoals() {
     parent_id: appointments.id,
     status: "active",
     next_review_at: null,
-    check_ins: [{ id: randomUUID(), at: daysAgo(18), note: "" }],
+    check_ins: [{ id: crypto.randomUUID(), at: daysAgo(18), note: "" }],
     created_at: daysAgo(18),
     last_touched_at: daysAgo(18),
   };
 
   const ob = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Book OB",
     tier: "short-term",
     domain: "family",
@@ -158,7 +151,7 @@ function seedGoals() {
   };
 
   const novel = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: "Finish the novel draft",
     tier: "long-term",
     domain: "writing",
@@ -168,7 +161,7 @@ function seedGoals() {
     parent_id: null,
     status: "active",
     next_review_at: daysAgo(-3),
-    check_ins: [{ id: randomUUID(), at: daysAgo(16), note: "outlining session" }],
+    check_ins: [{ id: crypto.randomUUID(), at: daysAgo(16), note: "outlining session" }],
     created_at: daysAgo(45),
     last_touched_at: daysAgo(16),
   };
@@ -177,19 +170,19 @@ function seedGoals() {
 }
 
 function load() {
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
     const goals = seedGoals();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(goals, null, 2));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
     return goals;
   }
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  return JSON.parse(raw);
 }
 
 let goals = load();
 
 function persist() {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(goals, null, 2));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
 }
 
 export function getAll() {
@@ -203,7 +196,7 @@ export function getById(id) {
 export function create(data) {
   const now = new Date().toISOString();
   const goal = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: data.title,
     tier: data.tier,
     domain: data.domain || "",
@@ -259,7 +252,7 @@ export function addCheckIn(id, { note, at }) {
   const goal = getById(id);
   if (!goal) return null;
   const checkIn = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     at: at || new Date().toISOString(),
     note: note || "",
   };
