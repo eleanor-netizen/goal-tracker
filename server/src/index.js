@@ -1,13 +1,21 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as store from "./store.js";
 import { computeProgress, needsReview, childSummary } from "./compute.js";
+import { requireAuth, handleSession, handleLogin, handleLogout } from "./auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set("trust proxy", true);
 app.use(express.json());
+app.use(cookieParser());
+
+app.get("/api/session", handleSession);
+app.post("/api/login", handleLogin);
+app.post("/api/logout", handleLogout);
 
 function serializeGoal(goal, { includeCheckIns = false } = {}) {
   const children = store.childrenOf(goal.id);
@@ -72,7 +80,7 @@ router.get("/goals-flat", (req, res) => {
   res.json(store.getAll().map((g) => ({ id: g.id, title: g.title, tier: g.tier })));
 });
 
-app.use("/api", router);
+app.use("/api", requireAuth, router);
 
 const clientDist = path.join(__dirname, "..", "..", "client", "dist");
 if (fs.existsSync(clientDist)) {

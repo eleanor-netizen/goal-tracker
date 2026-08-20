@@ -14,7 +14,7 @@ npm install        # installs root, server, and client deps
 npm run dev         # runs the API (port 3001) and the Vite dev server (port 5173) together
 ```
 
-Open http://localhost:5173.
+Open http://localhost:5173. In dev, if `APP_PASSWORD` isn't set, the password defaults to `goals`.
 
 For a single-process production-style run (Express serves the built client):
 
@@ -23,6 +23,17 @@ npm start
 ```
 
 Open http://localhost:3001.
+
+## Auth
+
+The whole app sits behind a single shared password (no accounts, matching the "local app" brief) — a login screen gates the UI, and every API route requires a signed, httpOnly session cookie good for 30 days.
+
+Set these environment variables before deploying anywhere public:
+
+- `APP_PASSWORD` — required in production; the server refuses to start without it. Locally it falls back to `goals` with a console warning.
+- `APP_SESSION_SECRET` — signs the session cookie. If unset, a random secret is generated at boot, which means everyone gets logged out on every server restart. Set a fixed value to persist logins across restarts/deploys.
+
+Login attempts are rate-limited (10 per 15 minutes per IP) and the cookie is marked `secure` automatically when `NODE_ENV=production`, so it only travels over HTTPS.
 
 ## Data model
 
